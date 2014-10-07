@@ -1,4 +1,5 @@
 
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -73,7 +74,7 @@ int i2cWrite(size_t address, size_t reg, void* buffer, size_t len)
 	while(bytesWritten < len){
 		int err = write(i2cbus3, &writeBuffer[i], (len-bytesWritten) + 1);
 		if(err < 0){
-			LOG("error writing to i2c bus: %d\n", err);
+			LOG("error writing to i2c bus: %d %s\n", err, strerror( errno ));
 			return -1;
 		} else {
 			bytesWritten += err;

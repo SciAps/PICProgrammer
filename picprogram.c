@@ -5,6 +5,8 @@
 #include <fcntl.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+
 
 #include "i2c.h"
 #include "log.h"
@@ -61,7 +63,7 @@ bool enterBootloader()
 
 bool setAddressPointer(int address)
 {
-	TRACE("address: 0x%x", address)
+	TRACE("address: 0x%x\n", address);
 	uint8_t buff[2];
 	buff[0] = (address & 0xff00) >> 8;
 	buff[1] = address & 0xff;
@@ -70,25 +72,26 @@ bool setAddressPointer(int address)
 
 bool eraseFlash()
 {
-	TRACE()
-	uint8_t buff[2];
-	return i2cRead(PIC_i2c_address, 0x4, buff, 2) == 2;
+	TRACE();
+	uint8_t buff[1];
+	return i2cRead(PIC_i2c_address, 0x4, buff, 1) == 1;
 }
 
 bool uploadBlock(uint8_t* block)
 {
-	TRACE()
+	TRACE();
 	return i2cWrite(PIC_i2c_address, 0x2, block, BLOCK_SIZE) == BLOCK_SIZE;
 }
 
 bool downloadBlock(uint8_t* block)
 {
-	TRACE()
+	TRACE();
 	return i2cRead(PIC_i2c_address, 0x3, block, BLOCK_SIZE) == BLOCK_SIZE;
 }
 
 bool verifyBlock(uint8_t* a, uint8_t* b)
 {
+	TRACE();
 	for(int i=0;i<BLOCK_SIZE;i++) {
 		if(a[i] != b[i]) {
 			return false;
@@ -99,16 +102,16 @@ bool verifyBlock(uint8_t* a, uint8_t* b)
 
 bool writeFlash()
 {
-	TRACE()
-	uint8_t buff[2];
-	return i2cRead(PIC_i2c_address, 0x5, buff, 2) == 2;
+	TRACE();
+	uint8_t buff[1];
+	return i2cRead(PIC_i2c_address, 0x5, buff, 1) == 1;
 }
 
 bool exitBootloader()
 {
-	TRACE()
-	uint8_t buff[2];
-	return i2cRead(PIC_i2c_address, 0x6, buff, 2) == 2;
+	TRACE();
+	uint8_t buff[1];
+	return i2cRead(PIC_i2c_address, 0x6, buff, 1) == 1;
 }
 
 #define CMD(fun) if(!fun) {return -1;}
@@ -125,7 +128,6 @@ int main(int argv, char** argc)
 		printUsage();
 		return -1;
 	}
-
 	
 	LOG("using updatefile: %s\n", argc[1]);
 	updateFile = fopen(argc[1], "r");
@@ -136,8 +138,9 @@ int main(int argv, char** argc)
 
 	fseek(updateFile, 0L, SEEK_END);
 	long sz = ftell(updateFile);
-	const int numBlocks = (sz + (BLOCK_SIZE/2)) / BLOCK_SIZE;
-	LOG("size: %ld bytes, %d blocks", sz, numBlocks);
+	//round up
+	const int numBlocks = (sz + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	LOG("size: %ld bytes, %d blocks\n", sz, numBlocks);
 	
 
 	if((i2cbus3 = open(bus3name, O_RDWR)) < 0){
@@ -155,7 +158,10 @@ int main(int argv, char** argc)
 	}
 
 	CMD(enterBootloader())
-	CMD(setAddressPointer(0x3FFF))
+
+	sleep(1);
+
+	CMD(setAddressPointer(0x3FFF - 31))
 	CMD(eraseFlash())
 	
 	CMD(setAddressPointer(0x200));
@@ -192,13 +198,13 @@ int main(int argv, char** argc)
 
 
 	memset(block, 0, BLOCK_SIZE);
-	block[0] = 0x34;
-	block[1] = 0x55;
-	CMD(setAddressPointer(0x3FFF))
+	block[BLOCK_SIZE - 2] = 0x34;
+	block[BLOCK_SIZE - 1] = 0x55;
+	CMD(setAddressPointer(0x3FFF - 31))
 	CMD(uploadBlock(block))
 	CMD(writeFlash())
 
-	CMD(exitBootloader())
+	//CMD(exitBootloader())
 
 	LOG("flash success");
 	return 0;
