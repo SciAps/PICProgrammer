@@ -19,6 +19,7 @@ extern int i2cbus3;
 int i2cRead(size_t address, size_t reg, void* buffer, size_t len)
 {
 	TRACE("address: 0x%x, reg: %d, len: %d\n", address, reg, len);
+	unsigned int sleeptime = 50000;
 
 	if(ioctl(i2cbus3, I2C_SLAVE, address) < 0){
 		LOG("failed to acquire bus address: 0x%x\n", address);
@@ -28,9 +29,11 @@ int i2cRead(size_t address, size_t reg, void* buffer, size_t len)
 	size_t bytesRead = 0;
 	char temp[1];
 	temp[0] = reg;
-	if((bytesRead = write(i2cbus3, temp, 1)) != 1){
+	while((bytesRead = write(i2cbus3, temp, 1)) != 1){
 		LOG("failed to write reg to i2c bus. error: %d\n", bytesRead);
-		return -1;
+		usleep(sleeptime);
+		sleeptime += 50000;
+		//return -1;
 	}
 
 	uint8_t* buf = (uint8_t*)buffer;
@@ -53,6 +56,7 @@ int i2cRead(size_t address, size_t reg, void* buffer, size_t len)
 int i2cWrite(size_t address, size_t reg, void* buffer, size_t len)
 {
 	TRACE("address: 0x%x, reg: %d, len: %d\n", address, reg, len);
+	unsigned int sleeptime = 50000;
 
 #define MAX_WRITE_SIZE 2048
 	if(len > MAX_WRITE_SIZE) {
@@ -75,7 +79,9 @@ int i2cWrite(size_t address, size_t reg, void* buffer, size_t len)
 		int err = write(i2cbus3, &writeBuffer[i], (len-bytesWritten) + 1);
 		if(err < 0){
 			LOG("error writing to i2c bus: %d %s\n", err, strerror( errno ));
-			return -1;
+			usleep(sleeptime);
+			sleeptime += 50000;
+			//return -1;
 		} else {
 			bytesWritten += err;
 			i += err;

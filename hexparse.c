@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "type.h"
+#include "log.h"
 
 ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 {
@@ -36,20 +37,27 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 }
 
 #define TYPE_DATA 0
+#define TYPE_EXTEND 4
 
 bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
 {
     char * line = NULL;
     size_t len = 0;
     int read;
+    uint32_t extendedAddress = 0;
 
+
+    for(size_t i=0;i<memorySize;i+=2){
+    	memory[i] = 0xff;
+    	memory[i+1] = 0x3f;
+    }
 
     memset(memory, 0xff, memorySize);
 
     while ((read = getline(&line, &len, stream)) != -1) {
 
         int recordLen;
-        int address;
+        uint32_t address;
         int fieldType;
         u_int8_t checksum = 0;
         int value;
@@ -57,6 +65,8 @@ bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
         if(sscanf(line, ":%02x%04x%02x", &recordLen, &address, &fieldType) != 3){
             return false;
         }
+
+        address = extendedAddress + address;
 
         for(int i=0;i<4;i++){
             sscanf(&line[1+2*i], "%02x", &value);
@@ -69,7 +79,12 @@ bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
                     return false;
                 }
                 checksum += value;
-                memory[address+i] = value;
+                if(address+i >= memorySize) {
+                	LOG("error: address 0x%x is out of bounds", address+i);
+                	return false;
+                } else {
+                	memory[address+i] = (0xff & value);
+            	}
             }
 
             if(!sscanf(&line[9+2*recordLen], "%02x", &value)) {
@@ -80,6 +95,12 @@ bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
             if(value != checksum){
                 return false;
             }
+
+        } else if(fieldType == TYPE_EXTEND) {
+            if (!sscanf(&line[9], "%04x", &value)) {
+                return false;
+            }
+            extendedAddress = ((uint32_t)value << 16);
 
         }
     }

@@ -6,7 +6,8 @@
 
 #define LOG(format, ...) printf(format, ##__VA_ARGS__)
 
-#define DEBUG_TRACE 1
+//#define DEBUG_TRACE 1
+//#define DEBUG 1
 
 #ifdef DEBUG_TRACE
 #  define TRACE(format, ...) LOG("[%s " __FILE__ ":%d] " format, __func__, __LINE__, ##__VA_ARGS__)
