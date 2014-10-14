@@ -37,7 +37,8 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 }
 
 #define TYPE_DATA 0
-#define TYPE_EXTEND 4
+#define TYPE_EXTEND_SEGMENT 2
+#define TYPE_EXTEND_LINEAR 4
 
 bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
 {
@@ -96,7 +97,13 @@ bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
                 return false;
             }
 
-        } else if(fieldType == TYPE_EXTEND) {
+        } else if(TYPE_EXTEND_SEGMENT) {
+            if (!sscanf(&line[9], "%04x", &value)) {
+                return false;
+            }
+            extendedAddress = ((uint32_t)value << 4);
+
+        } else if(fieldType == TYPE_EXTEND_LINEAR) {
             if (!sscanf(&line[9], "%04x", &value)) {
                 return false;
             }
