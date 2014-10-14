@@ -111,7 +111,6 @@ int main(int argv, char** argc)
 	sleep(1);
 
 	int address;
-	CMD(getAddressPointer(&address))
 
 	//erase the app valid flag. Do this just incase flash goes wrong
 	//it will stay in the bootloader
@@ -119,15 +118,15 @@ int main(int argv, char** argc)
 	CMD(eraseFlash())
 	
 #define START_BOOTLOADER 0x200
-#define END 0x3F80
-//#define END 0x4000
+//#define END 0x3F80
+#define END 0x4000
 
 	for(address=START_BOOTLOADER;address<END;address+=32){
 		CMD(setAddressPointer(address));
 		CMD(downloadBlock(block))
 
 		if(!verifyBlock(block, &memory[address*2])){
-			LOG("block: %d differs. Flashing...\n", (address-START_BOOTLOADER) / 32);
+			LOG("address block: 0x%04x differs. Flashing...\n", address);
 			CMD(setAddressPointer(address));
 			CMD(eraseFlash())
 
@@ -140,10 +139,9 @@ int main(int argv, char** argc)
 			CMD(verifyBlock(block, &memory[address*2]))
 
 		} else {
-			LOG("block: %d same\n", (address-START_BOOTLOADER) / 32);
+			LOG("address block: 0x%04x same\n", address);
 		}
 		
-		sleep(1);
 	}
 
 

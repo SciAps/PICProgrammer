@@ -63,9 +63,7 @@ int main(int argv, char** argc)
 
 	CMD(setAddressPointer(START_BOOTLOADER));
 
-	memset(block, 0xff, BLOCK_SIZE);
-	block[16] = 0x20;
-	block[17] = 0x52;
+	memset(block, 0x55, BLOCK_SIZE);
 	CMD(uploadBlock(block))
 	CMD(writeFlash())
 
@@ -74,7 +72,7 @@ int main(int argv, char** argc)
 
 	char buffer[1024];
 	for(int i=0;i<BLOCK_SIZE;i+=LINE_SIZE){
-		formatBinary(&block[i], buffer, i-BLOCK_SIZE);
+		formatBinary(&block[i], buffer, BLOCK_SIZE-i);
 		LOG("%s\n", buffer);
 	}
 	
