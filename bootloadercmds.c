@@ -61,7 +61,16 @@ bool downloadBlock(uint8_t* block)
 {
 	TRACE();
 	memset(block, 0xff, BLOCK_SIZE);
-	return i2cRead(PIC_i2c_address, 0x3, block, BLOCK_SIZE) == BLOCK_SIZE;
+
+
+	int bytesRead = 0;
+
+
+	bytesRead += i2cRead(PIC_i2c_address, 0x3, block, 16);
+	bytesRead += i2cRead(PIC_i2c_address, 0x3, &block[16], 16);
+	bytesRead += i2cRead(PIC_i2c_address, 0x3, &block[32], 16);
+	bytesRead += i2cRead(PIC_i2c_address, 0x3, &block[48], 16);
+	return bytesRead;
 }
 
 bool verifyBlock(uint8_t* a, uint8_t* b)

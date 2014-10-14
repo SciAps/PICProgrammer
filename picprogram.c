@@ -118,8 +118,8 @@ int main(int argv, char** argc)
 	CMD(eraseFlash())
 	
 #define START_BOOTLOADER 0x200
-#define END 0x3F80
-//#define END 0x4000
+//#define END 0x3F80
+#define END 0x4000
 
 	for(address=START_BOOTLOADER;address<END;address+=32){
 		CMD(setAddressPointer(address));
@@ -139,10 +139,9 @@ int main(int argv, char** argc)
 			CMD(verifyBlock(block, &memory[address*2]))
 
 		} else {
-			LOG("address block: 0x%04x\n", address);
+			LOG("address block: 0x%04x same\n", address);
 		}
 		
-		sleep(1);
 	}
 
 

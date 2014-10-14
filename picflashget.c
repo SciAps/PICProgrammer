@@ -56,7 +56,7 @@ int main(int argv, char** argc)
 #define END 0x4000
 
 
-	int address;
+	int address = START_BOOTLOADER;
 	int readAddress;
 	//CMD(setAddressPointer(START_BOOTLOADER));
 	for(address=START_BOOTLOADER;address<END;address+=32){
@@ -69,10 +69,7 @@ int main(int argv, char** argc)
 		for(int i=0;i<BLOCK_SIZE;i+=LINE_SIZE){
 			formatBinary(&block[i], buffer, BLOCK_SIZE-i);
 			LOG("%s\n", buffer);
-		}
-
-		sleep(1);
-		
+		}		
 
 		//CMD(getAddressPointer(&readAddress))
 		//LOG("read address: 0x%04x\n", readAddress);
