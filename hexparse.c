@@ -74,16 +74,20 @@ bool parseHexFile(FILE* stream, uint8_t* memory, size_t memorySize)
         }
 
         if(fieldType == TYPE_DATA){
-            for(int i=0;i<recordLen;i++){
-                if(!sscanf(&line[9+2*i], "%02x", &value)) {
+            for(int i=0;i<recordLen;i+=2){
+            	int lowbyte, highbyte;
+                if(!sscanf(&line[9+2*i], "%02x%02x", &lowbyte, &highbyte)) {
                     return false;
                 }
-                checksum += value;
-                if(address+i >= memorySize) {
+                checksum += lowbyte;
+                checksum += highbyte;
+
+                if(address+i+1 >= memorySize) {
                 	LOG("error: address 0x%x is out of bounds", address+i);
                 	return false;
                 } else {
-                	memory[address+i] = (0xff & value);
+                	memory[address+i] &= highbyte;
+                	memory[address+i+1] &= lowbyte;
             	}
             }
 
