@@ -55,9 +55,10 @@ int main(int argv, char** argc)
 #define START_BOOTLOADER 0x200
 #define END 0x4000
 
+
 	int address;
 	int readAddress;
-	CMD(setAddressPointer(START_BOOTLOADER));
+	//CMD(setAddressPointer(START_BOOTLOADER));
 	for(address=START_BOOTLOADER;address<END;address+=32){
 
 		CMD(setAddressPointer(address))
@@ -66,13 +67,15 @@ int main(int argv, char** argc)
 		LOG("address: 0x%04x\n", address);
 		char buffer[1024];
 		for(int i=0;i<BLOCK_SIZE;i+=LINE_SIZE){
-			formatBinary(block, buffer, i-BLOCK_SIZE);
+			formatBinary(&block[i], buffer, BLOCK_SIZE-i);
 			LOG("%s\n", buffer);
 		}
+
+		sleep(1);
 		
 
-		CMD(getAddressPointer(&readAddress))
-		LOG("read address: 0x%04x\n", readAddress);
+		//CMD(getAddressPointer(&readAddress))
+		//LOG("read address: 0x%04x\n", readAddress);
 	}
 
 }

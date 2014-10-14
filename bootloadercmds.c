@@ -27,7 +27,7 @@ bool setAddressPointer(int address)
 {
 	TRACE("address: 0x%x\n", address);
 	uint8_t buff[2];
-	buff[0] = (address & 0xff00) >> 8;
+	buff[0] = 0x3f & (address >> 8);
 	buff[1] = address & 0xff;
 	return i2cWrite(PIC_i2c_address, 0x1, buff, 2) == 3;
 }
@@ -37,8 +37,8 @@ bool getAddressPointer(int* address)
 	TRACE();
 	uint8_t buff[2];
 	bool retval = i2cRead(PIC_i2c_address, 0x1, buff, 2) == 2;
-	address[0] = (buff[0] << 8);
-	address[0] |= buff[1] & 0xff;
+	address[0] = 0x3f & ((uint16_t)buff[0] << 8);
+	address[1] |= buff[1] & 0xff;
 	return retval;
 }
 
@@ -60,7 +60,7 @@ bool uploadBlock(uint8_t* block)
 bool downloadBlock(uint8_t* block)
 {
 	TRACE();
-	memset(block, 0, BLOCK_SIZE);
+	memset(block, 0xff, BLOCK_SIZE);
 	return i2cRead(PIC_i2c_address, 0x3, block, BLOCK_SIZE) == BLOCK_SIZE;
 }
 
@@ -85,13 +85,19 @@ bool verifyBlock(uint8_t* a, uint8_t* b)
 
 	#ifdef DEBUG
 	for(int i=0;i<BLOCK_SIZE;i+=2) {
-		LOG("\ni: %d a: 0x%04x b: 0x%04x", i, 0x3fff & (a[i] << 8 | a[i+1]), 0x3fff & (b[i] << 8 | b[i+1]) );
+		LOG("\ni: %d a: 0x%04x b: 0x%04x", i, 
+			0x3fff & ((uint16_t)a[i] << 8 | (0xff & a[i+1])),
+			0x3fff & ((uint16_t)b[i] << 8 | (0xff & b[i+1]))
+			);
 	}
 	#endif
 
 
 	for(int i=0;i<BLOCK_SIZE;i+=2) {
-		if( (0x3fff & (a[i] << 8 | a[i+1])) != (0x3fff & (b[i] << 8 | b[i+1])) ) {
+		if( 
+			(0x3fff & ((uint16_t)a[i] << 8 | (0xff & a[i+1]))) != 
+			(0x3fff & ((uint16_t)b[i] << 8 | (0xff & b[i+1])))
+			) {
 			return false;
 		}
 	}
